@@ -1,23 +1,20 @@
-# Compiled class file
-*.class
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Log file
-*.log
+# dependencies
+/node_modules
+/npm-debug.log*
+/yarn-error.log
+/yarn.lock
+/package-lock.json
+.idea
+# production
+/dist
 
-# BlueJ files
-*.ctxt
+# misc
+.DS_Store
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
+# umi
+/src/.umi
+/src/.umi-production
+/src/.umi-test
+/.env.local

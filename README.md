@@ -1,2 +1,17 @@
 # my-h5-component
-自己封装实现的一些H5组件库
+曾经在项目中投入运用的，自己用react封装实现的部分H5组件
+
+# umi project
+## Getting Started
+
+Install dependencies,
+
+```bash
+$ yarn
+```
+
+Start the dev server,
+
+```bash
+$ yarn start
+```
