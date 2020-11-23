@@ -1,5 +1,5 @@
 # my-h5-component
-曾经在项目中投入运用的，自己用react封装实现的部分H5组件
+曾经在项目中投入运用的，用react封装实现的部分H5页面组件
 
 # umi project
 ## Getting Started

@@ -5,7 +5,7 @@ import { mapStateToProps, dispatchToProps } from '@/utils/mapToProps';
 import styles from './index.less';
 
 interface IProps {
-  ReqAuthCode;
+  ReqAuthCode: any;
 }
 
 const Captcha: FC<IProps> = props => {
