@@ -11,6 +11,7 @@ export default defineConfig({
       routes: [
         { path: '/index', component: '@/pages/index' },
         { path: '/captcha', component: '@/pages/captcha' },
+        { path: '/signature', component: '@/pages/signature' },
       ],
     },
   ],

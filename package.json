@@ -22,6 +22,8 @@
   "dependencies": {
     "@umijs/preset-react": "1.x",
     "@umijs/test": "^3.2.27",
+    "html2canvas": "^1.0.0-rc.7",
+    "jspdf": "^2.1.1",
     "lint-staged": "^10.0.7",
     "prettier": "^1.19.1",
     "react": "^16.12.0",

@@ -1,0 +1,41 @@
+.singlePage {
+  height: 100%;
+  text-align: center;
+}
+.canvas {
+  //canvas的宽高为何只能写成内联的形式？
+  //因为<canvas>有自己的默认宽高300px*150px，而且在<canvas>中定义width、height跟在style中定义width和height是有所区别的，
+  // <canvas>标签的width和height是绘画区域实际宽度和高度，绘制的图形都是在这个上面。而style的width和height是<canvas>在浏览器中被渲染的
+  // 高度和宽度。如果<canvas>中没有直接定义width和height没或值不正确，就被设置成默认值{width:300px，height:150px}。所以，
+  // 即使你在style中设置了canvas {width: 200px; height: 200px;}，此时你输出canvas.height 值依旧为150，canvas.width值依旧为300.
+  // 这和一般标签你不设就就为undefined不同的。
+  border: 1px solid #999;
+  //background: rgba(255,255,155,0);
+}
+.btnGroup {
+  display: flex;
+  width: 94%;
+  margin: 10px auto 0;
+  justify-content: space-between;
+}
+.btn {
+  padding: 0 60px;
+}
+.para {
+  text-align: justify;
+  text-indent: 2em;
+  padding: 0 10px 50px;
+}
+.txt {
+  height: 50px;
+  position: relative;
+}
+.signedImg {
+  position: absolute;
+  right: 10px;
+  top: -10px;
+  height: 50px;
+}
+.downLoad {
+  margin-top: 30px;
+}
