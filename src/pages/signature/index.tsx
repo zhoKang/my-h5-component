@@ -3,25 +3,25 @@ import React, { FC } from 'react';
 import html2Canvas from 'html2canvas';
 import JsPDF from 'jspdf';
 import styles from './index.less';
-import { Button, Icon, List, Radio, Pagination } from 'antd-mobile';
+import { Button, Icon, List } from 'antd-mobile';
 
 interface IProps {}
 
 const Signature: FC<IProps> = props => {
   const [signedImg, setSignedImg] = useState('');
-  const [pageData, setPageData] = useState('');
   const {} = props;
   const pdfDom = useRef(null);
+  const canvasDom = useRef(null);
 
   useEffect(() => {
     let beginX: number, beginY: number;
-    const canvas: any = document.querySelector('canvas');
+    const canvas: HTMLCanvasElement = canvasDom.current;
     const ctx = canvas.getContext('2d');
     ctx.fillStyle = '#fff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     canvas.addEventListener('touchstart', function(event: any) {
       event.preventDefault(); // 阻止签名的时候页面跟着滚动
-      beginX = event.touches[0].clientX - this.offsetLeft; // 此处可介绍下clientX pageX screenY
+      beginX = event.touches[0].clientX - this.offsetLeft;
       beginY = event.touches[0].pageY - this.offsetTop;
     });
     canvas.addEventListener('touchmove', (event: any) => {
@@ -66,34 +66,43 @@ const Signature: FC<IProps> = props => {
     ctx.clearRect(0, 0, w, h);
   };
 
-  const download = () => {
+  const print = () => {
     let dom: HTMLElement = pdfDom.current;
+    // let len = dom.childElementCount, i = 0, tempHeight = 0, nodes = dom.children, hasChanged = [];
+    // while (i < len) {
+    //   tempHeight += nodes[i].clientHeight;
+    //   if (tempHeight < 550 && nodes[i + 1] && tempHeight + nodes[i + 1].clientHeight > 550) {
+    //     hasChanged.push(i);
+    //     nodes[i].style.paddingBottom = -tempHeight + 550 + 'px';
+    //     tempHeight = 0;
+    //   }
+    //   i++;
+    // }
     html2Canvas(dom, {
       allowTaint: true,
-      width: dom.offsetWidth, //设置获取到的canvas宽度
-      height: dom.offsetHeight, //设置获取到的canvas高度
+      width: dom.scrollWidth, //设置获取到的canvas宽度，若有横向滚动条，则可以使内容全部展示
+      height: dom.scrollHeight, //设置获取到的canvas高度
       x: 0, //页面在水平方向滚动的距离
       y: 0, //页面在垂直方向滚动的距离
     }).then((canvas: HTMLCanvasElement) => {
-      let contentWidth = canvas.width;
-      let contentHeight = canvas.height;
-      let pageHeight = (contentWidth / 592.28) * 830;
-      let leftHeight = contentHeight;
-      let position = 0;
-      let imgWidth = 595.28;
-      let imgHeight = (592.28 / contentWidth) * contentHeight;
-      let pageData = canvas.toDataURL('image/jpeg', 1.0);
-      // setPageData(pageData);
+      let canvasWidth = canvas.width;
+      let canvasHeight = canvas.height;
+      let pageHeight = (canvasWidth / 592.28) * 841.89; // 一页A4 pdf能显示的canvas高度
+      let imgWidth = 595.28; // 设置图片宽度和A4纸宽度相等
+      let imgHeight = (592.28 / canvasWidth) * canvasHeight; //等比例换算成A4纸的高度
+      let totalHeight = imgHeight; // 需要打印的图片总高度，初始状态和图片高度相等
+      let pageData = canvas.toDataURL('image/png', 1.0);
       let PDF = new JsPDF('p', 'pt', 'a4', true);
-
-      if (leftHeight < pageHeight) {
-        PDF.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight);
+      if (totalHeight < pageHeight) {
+        // 只有一页的情况
+        PDF.addImage(pageData, 'JPEG', 0, 0, imgWidth, imgHeight); // 从顶部开始打印
       } else {
-        while (leftHeight > 0) {
-          PDF.addImage(pageData, 'JPEG', 0, position, imgWidth, imgHeight);
-          leftHeight -= pageHeight;
-          position -= 841.89;
-          if (leftHeight > 0) {
+        let top = 0; // 打印初始区域
+        while (totalHeight > 0) {
+          PDF.addImage(pageData, 'JPEG', 0, top, imgWidth, imgHeight); // 从图片顶部往下top位置开始打印
+          totalHeight -= pageHeight;
+          top -= 841.89;
+          if (totalHeight > 0) {
             PDF.addPage();
           }
         }
@@ -107,7 +116,7 @@ const Signature: FC<IProps> = props => {
       <div className={styles.pdfArea} ref={pdfDom}>
         <h2>Title</h2>
         <p className={styles.para}>
-          这是第一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字
+          这是第一段测试文字这是一段测试文字这是一1111文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字
         </p>
         <p className={styles.para}>
           这是第二段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字
@@ -133,6 +142,9 @@ const Signature: FC<IProps> = props => {
         <p className={styles.para}>
           这是第九段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字
         </p>
+        <p className={styles.para}>
+          这是第九段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字这是一段测试文字
+        </p>
         <div className={styles.txt}>
           签名：
           {signedImg && (
@@ -140,8 +152,12 @@ const Signature: FC<IProps> = props => {
           )}
         </div>
       </div>
-      <canvas className={styles.canvas} width="350" height="150" />
-      <img src={pageData} />
+      <canvas
+        className={styles.canvas}
+        ref={canvasDom}
+        width="350"
+        height="150"
+      />
       <div className={styles.btnGroup}>
         <Button
           onClick={confirm}
@@ -161,7 +177,7 @@ const Signature: FC<IProps> = props => {
         </Button>
       </div>
       <Button
-        onClick={download}
+        onClick={print}
         activeStyle={false}
         type={'primary'}
         className={styles.downLoad}
