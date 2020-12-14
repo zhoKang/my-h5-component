@@ -1,140 +1,139 @@
-// 将File（Blob）对象转变为一个dataURL字符串， 即base64格式
-const fileToDataURL = file =>
-  new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onloadend = e => resolve(e.target.result);
-    reader.readAsDataURL(file);
-  });
-
-// 将dataURL字符串转变为image对象，即base64转img对象
-const dataURLToImage = dataURL =>
+const fileToImage = blob =>
   new Promise(resolve => {
     const img = new Image();
     img.onload = () => resolve(img);
-    img.src = dataURL;
+    img.src = getObjectUrl(blob);
+  });
+
+const getObjectUrl = file => {
+  let url = null;
+  if (window.createObjectURL != undefined) {
+    // basic
+    url = window.createObjectURL(file);
+  } else if (window.URL != undefined) {
+    // mozilla(firefox)
+    url = window.URL.createObjectURL(file);
+  } else if (window.webkitURL != undefined) {
+    // webkit or chrome
+    url = window.webkitURL.createObjectURL(file);
+  }
+  return url;
+};
+
+const imgToCanvas = img =>
+  new Promise(resolve => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const imgWidth = img.width;
+    const imgHeight = img.height;
+    canvas.width = imgWidth;
+    canvas.height = imgHeight;
+    // 尺寸与原图保持一致
+    context.clearRect(0, 0, imgWidth, imgHeight);
+    context.drawImage(img, 0, 0, imgWidth, imgHeight);
+    resolve(canvas);
   });
 
 // 将一个canvas对象转变为一个File（Blob）对象
-const canvastoFile = (canvas, type, quality) =>
-  new Promise(resolve => canvas.toBlob(blob => resolve(blob), type, quality));
+const canvastoFile = (canvas, type, encoderOptions) =>
+  new Promise(resolve =>
+    canvas.toBlob(blob => resolve(blob), type, encoderOptions),
+  );
 
-const compress = (originfile, maxSize) =>
+const downLoadImg = blob => {
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'fileName'; // 文件命名
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(link.href);
+};
+
+const compress = (originfile, limitedSize) =>
   new Promise(async (resolve, reject) => {
-    const originSize = originfile.size / 1024; // 单位为kb
-    console.log('图片指定最大尺寸为', maxSize, '原始尺寸为：', originSize);
-
-    // 将原图片转换成base64
-    const base64 = await fileToDataURL(originfile);
-
-    // 缩放图片需要的canvas
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-
-    // 小于maxSize，则不需要压缩，直接返回
-    if (originSize < maxSize) {
-      resolve({ compressBase64: base64, compressFile: originfile });
-      console.log(`图片小于指定大小:${maxSize}KB，不用压缩`);
+    const originSize = originfile.size / 1024; // 计算文件大小 单位为kb
+    // 若小于limitedSize，则不需要压缩，直接返回
+    if (originSize < limitedSize) {
+      resolve({ file: originfile, msg: '体积小于期望值，无需压缩！' });
       return;
     }
-    const img = await dataURLToImage(base64);
+    // 将获取到的blob文件恢复成图片
 
-    const scale = 1;
-    const originWidth = img.width;
-    const originHeight = img.height;
-    const targetWidth = originWidth * scale;
-    const targetHeight = originHeight * scale;
-
-    canvas.width = targetWidth;
-    canvas.height = targetHeight;
-    context.clearRect(0, 0, targetWidth, targetHeight);
-    context.drawImage(img, 0, 0, targetWidth, targetHeight);
-
-    // 将Canvas对象转变为dataURL字符串，即压缩后图片的base64格式
-    // const compressedBase64 = canvas.toDataURL('image/jpeg', 0.1);
-    // 经过我的对比，通过scale控制图片的拉伸来压缩图片，能够压缩jpg，png等格式的图片
-    // 通过canvastoFile方法传递quality来压缩图片，只能压缩jpeg类型的图片，png等格式不支持
-    // scale的压缩效果没有canvastoFile好
-    // 在压缩到指定大小时，通过scale压缩的图片比通过quality压缩的图片模糊的多
-    // 压缩的思路，用二分法找最佳的压缩点
-    // 这里为了规避浮点数计算的弊端，将quality转为整数再计算;
-    // const preQuality = 100;
-    const maxQualitySize = { quality: 100, size: Number.MAX_SAFE_INTEGER };
-    const minQualitySize = { quality: 0, size: 0 };
-    let quality = 100;
+    const img = await fileToImage(originfile);
+    // 使用此图片生成需要的canvas
+    const canvas = await imgToCanvas(img);
+    // 为规避js精度问题，将encoderOptions乘100为整数，初始最大size为MAX_SAFE_INTEGER
+    const maxQualitySize = {
+      encoderOptions: 100,
+      size: Number.MAX_SAFE_INTEGER,
+    };
+    // 初始最小size为0
+    const minQualitySize = { encoderOptions: 0, size: 0 };
+    let encoderOptions = 100; // 初始质量参数
     let count = 0; // 压缩次数
-    let compressFinish = false; // 压缩完成
-    let invalidDesc = '';
-    let compressBlob = null;
-
-    // 二分法最多尝试8次即可覆盖全部可能
-    while (!compressFinish && count < 12) {
-      compressBlob = await canvastoFile(canvas, 'image/jpeg', quality / 100);
+    let errorMsg = ''; // 出错信息
+    let compressBlob = null; // 压缩后的文件Blob
+    //  压缩思路，用二分法找最佳的压缩点 最多尝试8次即可覆盖全部可能
+    while (count < 8) {
+      compressBlob = await canvastoFile(
+        canvas,
+        'image/jpeg',
+        encoderOptions / 100,
+      );
       const compressSize = compressBlob.size / 1024;
       count++;
-      if (compressSize === maxSize) {
-        console.log(`压缩完成，总共压缩了${count}次`);
-        compressFinish = true;
-        return;
-      }
-      if (compressSize > maxSize) {
-        maxQualitySize.quality = quality;
+      if (compressSize === limitedSize) {
+        // 压缩后的体积与期望值相等  压缩完成，总共压缩了count次
+        break;
+      } else if (compressSize > limitedSize) {
+        // 压缩后的体积比期望值大
+        maxQualitySize.encoderOptions = encoderOptions;
         maxQualitySize.size = compressSize;
-      }
-      if (compressSize < maxSize) {
-        minQualitySize.quality = quality;
+      } else {
+        // 压缩后的体积比期望值小
+        minQualitySize.encoderOptions = encoderOptions;
         minQualitySize.size = compressSize;
       }
-      console.log(
-        `第${count}次压缩,压缩后大小${compressSize},quality参数:${quality}`,
-      );
-
-      quality = Math.ceil(
-        (maxQualitySize.quality + minQualitySize.quality) / 2,
-      );
-
-      if (maxQualitySize.quality - minQualitySize.quality < 2) {
-        if (!minQualitySize.size && quality) {
-          quality = minQualitySize.quality;
-        } else if (!minQualitySize.size && !quality) {
-          compressFinish = true;
-          invalidDesc = '压缩失败，无法压缩到指定大小';
-          console.log(`压缩完成，总共压缩了${count}次`);
-        } else if (minQualitySize.size > maxSize) {
-          compressFinish = true;
-          invalidDesc = '压缩失败，无法压缩到指定大小';
-          console.log(`压缩完成，总共压缩了${count}次`);
+      encoderOptions =
+        (maxQualitySize.encoderOptions + minQualitySize.encoderOptions) >> 1;
+      if (maxQualitySize.encoderOptions - minQualitySize.encoderOptions < 2) {
+        if (!minQualitySize.size && encoderOptions) {
+          encoderOptions = minQualitySize.encoderOptions;
+        } else if (!minQualitySize.size && !encoderOptions) {
+          errorMsg = '压缩失败，无法压缩到指定大小';
+          break;
+        } else if (minQualitySize.size > limitedSize) {
+          errorMsg = '压缩失败，无法压缩到指定大小';
+          break;
         } else {
-          console.log(`压缩完成，总共压缩了${count}次`);
-          compressFinish = true;
-          quality = minQualitySize.quality;
+          //  压缩完成
+          encoderOptions = minQualitySize.encoderOptions;
+          compressBlob = await canvastoFile(
+            canvas,
+            'image/jpeg',
+            encoderOptions / 100,
+          );
+          break;
         }
       }
     }
-
-    if (invalidDesc) {
-      // 压缩失败，则返回原始图片的信息
-      console.log(`压缩失败，无法压缩到指定大小：${maxSize}KB`);
+    // 压缩失败，则返回原始图片的信息
+    if (errorMsg) {
       reject({
-        msg: invalidDesc,
-        compressBase64: base64,
-        compressFile: originfile,
+        msg: errorMsg,
+        file: originfile,
       });
       return;
     }
-
-    compressBlob = await canvastoFile(canvas, 'image/jpeg', quality / 100);
     const compressSize = compressBlob.size / 1024;
     console.log(
-      `最后一次压缩（即第${count +
-        1}次），quality为:${quality}，大小：${compressSize}`,
+      `最后一次压缩后，encoderOptions为:${encoderOptions}，大小：${compressSize}`,
     );
-    const compressedBase64 = await fileToDataURL(compressBlob);
-
+    // 生成文件
     const compressedFile = new File([compressBlob], originfile.name, {
       type: 'image/jpeg',
     });
-
-    resolve({ compressFile: compressedFile, compressBase64: compressedBase64 });
+    resolve({ file: compressedFile, compressBlob, msg: '压缩成功！' });
   });
 
 export default compress;

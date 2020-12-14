@@ -9,3 +9,4 @@ declare module '*.svg' {
   export default url;
 }
 declare module '@/utils/mapToProps';
+declare module '@/utils/compress';
