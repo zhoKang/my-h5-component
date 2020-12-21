@@ -41,7 +41,6 @@ const Captcha: FC<IProps> = props => {
     if (curr.length > 6) {
       curr = curr.slice(0, 6);
     }
-    console.log(curr, 'currr');
     if (curr.length === 6) {
       //  支持复制粘贴功能
       setShowValue(curr.split(''));
