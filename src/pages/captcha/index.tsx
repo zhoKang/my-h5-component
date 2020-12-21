@@ -37,10 +37,24 @@ const Captcha: FC<IProps> = props => {
   }, [count]);
 
   const handleChange = (e: any) => {
-    let curr: number[] = e.target.value;
+    let curr: string[] = e.target.value;
+    if (curr.length > 6) {
+      curr = curr.slice(0, 6);
+    }
+    console.log(curr, 'currr');
+    if (curr.length === 6) {
+      //  支持复制粘贴功能
+      setShowValue(curr.split(''));
+      inputEle.current.style.visibility = 'hidden';
+      return;
+    }
     showValue.push(curr); // 收集输入的数字
     setIndex(index + 1);
     setDx(x + 57); // 输入框右移
+    if (index === 5) {
+      // 隐藏焦点
+      inputEle.current.style.visibility = 'hidden';
+    }
   };
 
   // 删除监听
@@ -90,7 +104,6 @@ const Captcha: FC<IProps> = props => {
           autoFocus
           onChange={handleChange}
           onKeyDown={handleDelete}
-          maxLength={1}
         />
       </div>
       <div className={styles.reGet + ' ' + (count > 0 ? '' : styles.hide)}>
