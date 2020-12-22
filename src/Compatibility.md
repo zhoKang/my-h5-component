@@ -20,3 +20,7 @@ window.addEventListener("pageshow", function(event){
 schema协议://jumpurl?url=%2Fpublic%2Ffin%2Fonsale%2Findex
 ```
 url后面可以跟app内嵌H5的路由
+
+## 5. iPhone手机在滑动的时候会发生卡顿？
+使用表单提交数据时，若需要兼容安卓低版本手机或者微信Android5.0以下系统时，html5新增的属性FormData无法使用，此时可以考虑不使用ajax，而是直接表单提交，使用
+iframe来承载，[详细可见](https://juejin.cn/post/6908604005878857741)
