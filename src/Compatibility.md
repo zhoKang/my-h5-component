@@ -21,6 +21,13 @@ schema协议://jumpurl?url=%2Fpublic%2Ffin%2Fonsale%2Findex
 ```
 url后面可以跟app内嵌H5的路由
 
-## 5. iPhone手机在滑动的时候会发生卡顿？
+## 5. 最原始兼容最多的表单提交方式？
 使用表单提交数据时，若需要兼容安卓低版本手机或者微信Android5.0以下系统时，html5新增的属性FormData无法使用，此时可以考虑不使用ajax，而是直接表单提交，使用
-iframe来承载，[详细可见](https://juejin.cn/post/6908604005878857741)
+iframe来承载，[参考](https://juejin.cn/post/6908604005878857741)
+
+## 6. focus方法有时候无效？
+在iOS Safari浏览器下有时候就会出现 input.focus() 无效的情况，并不是代码行不通，而是生效需要一个前提，就是在点击事件中，而且是要在点击事件这个线程中。
+注意，并不是说input.focus()语句写在click事件中就是有效的。
+例如在Vue等框架中，DOM的渲染是数据驱动的，因此，往往会在click事件中进行数据变化，而此时的DOM渲染实在click事件之后执行的，因此，开发者自然而然会想到使用定时器进行处理。
+此时focus行为就不会触发是无效的，因为加了定时器，focus行为已经不和click在一个执行线程中，出于安全和体验的考虑，iOS系统就没有让输入框focus聚焦。
+[解决方案](https://www.zhangxinxu.com/wordpress/2020/10/ios-safari-input-button-focus/)
